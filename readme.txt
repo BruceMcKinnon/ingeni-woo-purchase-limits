@@ -4,7 +4,7 @@ Contributors: Bruce McKinnon
 Tags: woocommerce
 Requires at least: 6.3
 Tested up to: 6.3.2
-Stable tag: 2023.02
+Stable tag: 2023.03
 
 Used in conjunction with Woocommerce. Provides the ability to limit item purchases to specific user roles user over a period of time. Other user roles may either be blocked from purchase, or allowed to purchase without limitation.
 
@@ -59,3 +59,4 @@ v2023.01 - Initial version.
 
 v2023.02 - Now checks for 'completed', 'on hold' and 'processing' order statuses when counting past orders.
 
+v2023.03 - count_past_orders_by_product() - Fixed order status strings - full list at https://woocommerce.wp-a2z.org/oik_api/wc_get_order_statuses/

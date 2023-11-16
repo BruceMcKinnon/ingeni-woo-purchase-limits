@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Ingeni Woo Purchase Limits
-Version: 2023.02
+Version: 2023.03
 Plugin URI: http://ingeni.net
 Author: Bruce McKinnon - ingeni.net
 Author URI: http://ingeni.net
@@ -30,9 +30,11 @@ Requires : Wordpress 3.x or newer ,PHP 5 +
 
 v2023.01 - Initial version
 v2023.02 - count_past_orders_by_product() - Now checks for 'completed', 'on hold' and 'processing' order statuses when counting past orders.
-
+v2023.03 - count_past_orders_by_product() - Fixed order status strings - full list at https://woocommerce.wp-a2z.org/oik_api/wc_get_order_statuses/
 */
-$iwpl_debug_on = true;
+
+
+$iwpl_debug_on = false;
 
 function iwpl_log_console( $msg ) {
     echo '<script>console.log(' . json_encode($msg, JSON_HEX_TAG) . ');</script>';
@@ -255,6 +257,8 @@ function count_products_in_cart( $product_id, $variation_id = 0 ) {
 
 function count_past_orders_by_product( $user_id, $product_id, $variation_id, $time_limit ) {
     $past_item_order_count = 0;
+	global $wpdb;
+
 
     $earliest_order = '';
     $mth_limit = intval($time_limit);
@@ -268,9 +272,9 @@ function count_past_orders_by_product( $user_id, $product_id, $variation_id, $ti
     $args = array(
         'customer_id' => $user_id,
         'limit' => -1, // to retrieve _all_ orders by this user
-        'date_completed' => '>='.$earliest_order,
+        'date_created' => '>='.$earliest_order,
         'return' => 'ids',
-        'status' => array('completed','on hold','processing'), // Filter by order status (e.g., 'completed', 'processing', 'on hold', 'pending', etc.). Set to 'any' for all statuses.
+        'status' => array('wc-processing','wc-on-hold','wc-completed'), // Filter by order status (e.g., 'completed', 'processing', 'on hold', 'pending', etc.). Set to 'any' for all statuses.
         'meta_query' => array(
             array(
                 'key' => '_product_id', // Meta key to filter by product ID
@@ -281,6 +285,7 @@ function count_past_orders_by_product( $user_id, $product_id, $variation_id, $ti
     );
 //iwpl_log('args:'.print_r($args,true));
     $past_orders = wc_get_orders( $args );
+//iwpl_log('sql:'.$wpdb->last_query);
 //iwpl_log('my orders:'.print_r($past_orders,true));
 
     foreach($past_orders as $past_order_id) {
@@ -619,7 +624,8 @@ function ingeni_woo_purchase_limits_validate( $valid, $product_id, $quantity, $v
                 iwpl_log('prod_id:'.$product_id. ' var_id:' .$variation_id.' = previously_ordered:'.$previously_ordered);
 
                 if ( $previously_ordered > 0 ) {
-                    $error_msg = 'Sorry you may purchase up to '.($max_allowed - $previously_ordered) . ' \''.$product->get_name(). '\' at this time.';
+                    $error_msg = 'We have limited stock of \''.$product->get_name(). '\'. For further inquiries contact our team.';
+                    //$error_msg = 'Sorry you may purchase up to '.($max_allowed - $previously_ordered) . ' \''.$product->get_name(). '\' at this time.';
 
                 } else {
                     $error_msg = 'Sorry you may only purchase '. $max_allowed . ' x \''.$product->get_name(). '\'.';
